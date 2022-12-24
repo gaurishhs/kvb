@@ -1,6 +1,7 @@
 {
   "name": "kvb",
   "module": "index.ts",
+  "types": "index.ts",
   "type": "module",
   "version": "0.0.1",
   "devDependencies": {
