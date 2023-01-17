@@ -22,6 +22,15 @@ group('KVBase', () => {
     bench('update', () => {
         db.update('test', 'test2');
     });
+
+    bench('set (schema)', () => {
+        let db = new KVBase({
+            schema: {
+                test: { type: 'string' },
+            },
+        });
+        db.set('test', { test: 'test' });
+    })
 });
 
 run();

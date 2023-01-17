@@ -1,32 +1,71 @@
-import {Database} from "bun:sqlite";
-interface KVBaseOptions {
-    bunOptions?: {
-        filename?: string;
-        options?: number | { readonly?: boolean; create?: boolean; readwrite?: boolean; }
-    };
+import { Database } from "bun:sqlite";
+import Validator, { type AsyncCheckFunction, type SyncCheckFunction, type ValidationSchema, type ValidatorConstructorOptions } from "fastest-validator";
+interface KVBaseOptions<T = any> {
+    bunOptions?: { filename?: string; options?: | number | { readonly?: boolean; create?: boolean; readwrite?: boolean } };
     tableName?: string;
+    schema?: ValidationSchema<T>;
+    validatorOptions?: ValidatorConstructorOptions;
 }
 export class KVBase<T = any> {
-    private db: Database;
-    constructor(private options:KVBaseOptions={
-        tableName: "kvbase",
-    }) {
-        this.db = new Database(options.bunOptions?.filename ?? ":memory:", options.bunOptions?.options ?? { readonly: false, create: true });
-        this.db.run(`CREATE TABLE IF NOT EXISTS ${options.tableName} (key TEXT PRIMARY KEY, value TEXT)`);
+    protected db: Database;
+    public v?: Validator;
+    protected checker?: SyncCheckFunction | AsyncCheckFunction;
+    constructor(private o: KVBaseOptions = { tableName: "kvbase" }) {
+        this.db = new Database(
+            o.bunOptions?.filename ?? ":memory:",
+            o.bunOptions?.options ?? { readonly: false, create: true }
+        );
+        this.db.run(
+            `CREATE TABLE IF NOT EXISTS ${o.tableName} (key TEXT PRIMARY KEY, value TEXT)`
+        );
+        if (o.schema) {
+            this.v = new Validator(o.validatorOptions);
+            this.checker = this.v.compile(o.schema);
+        }
     }
     async get(key: string, first?: boolean): Promise<T | undefined> {
-        return first ? this.db.query(`SELECT value FROM ${this.options.tableName}`).get(key)?.value : this.db.query(`SELECT value FROM ${this.options.tableName}`).all(key).map((v: any) => v.value);
+        const p = (v: string) => {
+            try {
+                return JSON.parse(v);
+            } catch {
+                return v;
+            }
+        }
+        const result = first
+            ? this.db.query(`SELECT value FROM ${this.o.tableName}`).get(key)
+                ?.value
+            : this.db
+                .query(`SELECT value FROM ${this.o.tableName}`)
+                .all(key)
+                .map((v: any) => v.value);
+        if (result) {
+            if (/^\s*(\{|\[)/.test(result)) {
+                return p(result)
+            } else return result
+        } else return undefined
     }
     async set(key: string, value: T): Promise<void> {
-        this.db.run(`INSERT OR REPLACE INTO ${this.options.tableName} VALUES ($key, $value)`, { $key: key, $value: value });
+        if (this.checker) {
+            const check = this.checker(value);
+            if (check !== true) throw new Error(check.toString());
+        }
+        return this.db.run(
+            `INSERT OR REPLACE INTO ${this.o.tableName} VALUES ($key, $value)`,
+            { $key: key, $value: typeof value === "object" ? JSON.stringify(value) : value }
+        );
     }
     async delete(key: string): Promise<void> {
-        this.db.run(`DELETE FROM ${this.options.tableName} WHERE key = $key`, { $key: key });
+        return this.db.run(`DELETE FROM ${this.o.tableName} WHERE key = $key`, {
+            $key: key,
+        });
     }
     async update(key: string, value: T): Promise<void> {
-        this.db.run(`UPDATE ${this.options.tableName} SET value = $value WHERE key = $key`, { $key: key, $value: value });
-    }    
+        return this.db.run(
+            `UPDATE ${this.o.tableName} SET value = $value WHERE key = $key`,
+            { $key: key, $value: value }
+        );
+    }
     async close(): Promise<void> {
-        this.db.close();
-    }    
+        return this.db.close();
+    }
 }

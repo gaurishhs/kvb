@@ -1,5 +1,5 @@
 # KVBase
-KVBase is a <1.5KB key-value store for Bun. It internally uses `bun:sqlite` for the storage.
+KVBase is a < 3KB key-value store for Bun. It internally uses `bun:sqlite` for the storage.
 
 ## Installation
 
@@ -47,24 +47,26 @@ bun wiptest
 
 ```sh 
 cpu: Intel(R) Core(TM) i5-5350U CPU @ 1.80GHz
-runtime: bun 0.4.0 (x64-darwin)
+runtime: bun 0.5.0 (x64-darwin)
 
-benchmark        time (avg)             (min … max)       p75       p99      p995
---------------------------------------------------- -----------------------------
+benchmark         time (avg)             (min … max)       p75       p99      p995
+---------------------------------------------------- -----------------------------
 • KVBase
---------------------------------------------------- -----------------------------
-set            9.45 µs/iter     (7.03 µs … 1.49 ms)   8.68 µs  25.45 µs  41.34 µs
-get (first)    1.19 µs/iter   (974.23 ns … 2.55 µs)   1.18 µs   2.55 µs   2.55 µs
-get (all)      1.33 µs/iter      (1.1 µs … 1.75 µs)   1.41 µs   1.75 µs   1.75 µs
-delete          4.9 µs/iter     (3.9 µs … 10.52 µs)    4.9 µs  10.52 µs  10.52 µs
-update          5.2 µs/iter     (4.59 µs … 5.97 µs)   5.53 µs   5.97 µs   5.97 µs
+---------------------------------------------------- -----------------------------
+set             11.4 µs/iter    (6.83 µs … 32.14 ms)   8.57 µs  21.29 µs  30.91 µs
+get (first)     1.28 µs/iter   (958.38 ns … 1.97 µs)   1.38 µs   1.97 µs   1.97 µs
+get (all)       2.03 µs/iter     (1.39 µs … 4.61 µs)   2.23 µs   4.61 µs   4.61 µs
+delete          4.16 µs/iter     (3.55 µs … 5.59 µs)   4.41 µs   5.59 µs   5.59 µs
+update          6.02 µs/iter    (4.29 µs … 11.21 µs)   6.51 µs  11.21 µs  11.21 µs
+set (schema)  684.69 µs/iter   (386.83 µs … 7.35 ms) 637.98 µs   4.07 ms   4.93 ms
 
 summary for KVBase
   set
-   7.91x slower than get (first)
-   7.09x slower than get (all)
-   1.93x slower than delete
-   1.82x slower than update
+   8.9x slower than get (first)
+   5.63x slower than get (all)
+   2.74x slower than delete
+   1.89x slower than update
+   60.08x faster than set (schema)
 ```
 
 To run the benchmarks, use the following command:
@@ -81,6 +83,10 @@ Creates a new instance of KVBase.
 #### `options`
 Type: `KVBaseOptions`
 Source: `src/index.ts`
+
+Schema for `KVBaseOptions`.
+
+Schema is an optional parameter. If not supplied, No schema will be used. If supplied, the schema will be used to validate the data in every set call. If the data is invalid, an error will be thrown. The schema is validated using [fastest-validator](https://github.com/icebob/fastest-validator) and the schema is passed as it is to the validator. For more information on the schema, refer to the [fastest-validator documentation](https://github.com/icebob/fastest-validator#usage). Supply the Validator instance options in the `options.validatorOptions` property. 
 
 ```ts
 interface KVBaseOptions {

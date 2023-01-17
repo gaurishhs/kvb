@@ -3,9 +3,12 @@
   "module": "index.ts",
   "types": "index.ts",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "devDependencies": {
     "bun-types": "^0.4.0",
     "mitata": "^0.1.6"
+  },
+  "dependencies": {
+    "fastest-validator": "^1.16.0"
   }
 }

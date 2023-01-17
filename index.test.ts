@@ -26,3 +26,13 @@ test("KVBase.update", async () => {
     await db.update("test", "test2");
     expect(await db.get("test", true))
 });
+
+test("KVBase.set (schema)", async () => {
+    let db = new KVBase({
+        schema: {
+            test: { type: "string" },
+        },
+    });
+    await db.set("test", { test: "test" });
+    expect(await db.get("test", true)).toEqual({ test: "test" });
+});
