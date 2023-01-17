@@ -3,7 +3,7 @@
   "module": "index.ts",
   "types": "index.ts",
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "devDependencies": {
     "bun-types": "^0.4.0",
     "mitata": "^0.1.6"
