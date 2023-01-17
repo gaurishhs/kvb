@@ -4,3 +4,4 @@ index.test.ts
 index.bench.ts
 .gitignore
 bun.lockb
+.github
